@@ -107,6 +107,8 @@ class FeedbackModel(tez.Model):
         layer_norm_eps: float = 1e-7
 
         config = AutoConfig.from_pretrained(model_name)
+#         model_config = LongformerConfig.from_pretrained(Config.model_name,output_hidden_states=True)
+#         self.backbone = LongformerModel.from_pretrained(Config.model_name, config=model_config)
 
         config.update(
             {
@@ -124,7 +126,7 @@ class FeedbackModel(tez.Model):
         self.dropout3 = nn.Dropout(0.3)
         self.dropout4 = nn.Dropout(0.4)
         self.dropout5 = nn.Dropout(0.5)
-        self.output = nn.Linear(config.hidden_size, self.num_labels)
+        self.output = nn.Linear(3*config.hidden_size, self.num_labels)
 
     def fetch_optimizer(self):
         param_optimizer = list(self.named_parameters())
@@ -181,7 +183,9 @@ class FeedbackModel(tez.Model):
             transformer_out = self.transformer(ids, mask, token_type_ids)
         else:
             transformer_out = self.transformer(ids, mask)
-        sequence_output = transformer_out.last_hidden_state
+#         sequence_output = transformer_out.last_hidden_state
+        x = transformer_out.hidden_states
+        tmp=torch.cat((x[-1],x[-2],x[-3]),-1)
         sequence_output = self.dropout(sequence_output)
 
         logits1 = self.output(self.dropout1(sequence_output))
